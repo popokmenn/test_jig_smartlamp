@@ -26,6 +26,8 @@ void setupEnergySensor();
 void printError(byte error);
 void frameDisplay(String sensorName, int x);
 void writeLCD();
+void initSensors();
+void initWire();
 
 String dacReadPassed = "Initiating";
 String dacWritePassed = "Initiating";
@@ -49,6 +51,7 @@ void setup()
   pinMode(RELAY_PIN, OUTPUT);
   pinMode(PWRKEY_PIN, OUTPUT);
   pinMode(RESET_PIN, OUTPUT);
+  pinMode(BUTTON_PIN, INPUT);
   digitalWrite(RELAY_PIN, LOW);
   digitalWrite(PWRKEY_PIN, LOW);
   digitalWrite(RESET_PIN, LOW);
@@ -57,30 +60,58 @@ void setup()
   pinMode(10, INPUT_PULLUP);
   delay(2000);
 
-  // Set DAC Pins
-  Wire.setPins(13, 14);
-  // Set Light Sensor Pins
-  Wire1.setPins(21, 22);
-
-  pinMode(17, INPUT);
-  pinMode(21, INPUT);
-  pinMode(BACKLIGHT, OUTPUT);
-  digitalWrite(BACKLIGHT, HIGH);
-
   display.begin();
   display.setRotation(1);
   display.fillScreen(BACKGROUND_COLOR);
   display.setCursor(40, 50);
   delay(2000);
+
+  initWire();
 }
 
 void loop()
 {
+  int buttonState = digitalRead(33);
+  if (buttonState == 1)
+  {
+    // Display "restarting" message
+    display.fillScreen(BLACK);
+    display.setCursor(20, 50);
+    display.setTextColor(WHITE, BLACK); // Assuming WHITE is defined for text color
+    display.setTextSize(2);
+    display.println("Restarting");
+
+    delay(200); // Optional delay to allow the message to be visible
+
+    // Reset status messages
+    dacReadPassed = "Initiating";
+    dacWritePassed = "Initiating";
+    tempPassed = "Initiating";
+    energyPassed = "Initiating";
+    lightPassed = "Initiating";
+    delay(200);
+
+    // Reinitialize sensors and update display
+    initSensors();
+  }
+  initSensors();
+}
+
+void initWire()
+{
+  // Set DAC Pins
+  Wire.setPins(13, 14);
+  // Set Light Sensor Pins
+  Wire1.setPins(21, 22);
+}
+
+void initSensors()
+{
   setupDAC();
   setupTempSensor();
-  writeLCD();
   setupLightSensor();
   setupEnergySensor();
+  writeLCD();
 }
 
 void setupDAC()
